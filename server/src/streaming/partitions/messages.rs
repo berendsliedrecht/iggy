@@ -2,8 +2,10 @@ use crate::streaming::partitions::partition::Partition;
 use crate::streaming::polling_consumer::PollingConsumer;
 use crate::streaming::segments::segment::Segment;
 use crate::streaming::utils::random_id;
+use iggy::compression::compression_algorithm::CompressionAlgorithm;
 use iggy::error::Error;
 use iggy::models::messages::Message;
+use iggy::utils::crypto::Encryptor;
 use std::sync::Arc;
 use tracing::{trace, warn};
 
@@ -319,7 +321,12 @@ impl Partition {
         messages
     }
 
-    pub async fn append_messages(&mut self, mut messages: Vec<Message>) -> Result<(), Error> {
+    pub async fn append_messages(
+        &mut self,
+        compression_algorithm: &CompressionAlgorithm,
+        encryptor: &Option<Box<dyn Encryptor>>,
+        mut messages: Vec<Message>,
+    ) -> Result<(), Error> {
         {
             let last_segment = self.segments.last_mut().ok_or(Error::SegmentNotFound)?;
 
