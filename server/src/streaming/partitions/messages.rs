@@ -8,6 +8,7 @@ use iggy::models::messages::Message;
 use iggy::utils::crypto::Encryptor;
 use std::sync::Arc;
 use tracing::{trace, warn};
+use crate::streaming::models::messages_batch::MessagesBatch;
 
 const EMPTY_MESSAGES: Vec<Arc<Message>> = vec![];
 
@@ -363,24 +364,43 @@ impl Partition {
         }
 
         let messages_count = messages.len() as u32;
+        let begin_offset = self.current_offset;
+
+        // lets keep it like that for now, in the future when producer side compression
+        // is implemented will change this to offset_delta (u32 instead of u64)
+        let mut curr_offset = self.current_offset;
         for message in &mut messages {
-            if self.should_increment_offset {
-                self.current_offset += 1;
-            } else {
-                self.should_increment_offset = true;
-            }
-            message.offset = self.current_offset;
+            message.offset = curr_offset;
+            curr_offset += 1;
         }
 
+        let last_offset  = curr_offset + self.current_offset;
+        if self.should_increment_offset {
+            self.current_offset += last_offset;
+        } else {
+            self.should_increment_offset = true;
+            self.current_offset += last_offset;
+        }
+
+        //batching compress
+        let batch = MessagesBatch::messages_to_batch(begin_offset, curr_offset as u32, messages);
+        {
+            let last_segment = self.segments.last_mut().ok_or(Error::SegmentNotFound)?;
+            last_segment.append_messages(batch, last_offset).await?;
+        }
+        /*
         let messages = messages.into_iter().map(Arc::new).collect::<Vec<_>>();
         {
             let last_segment = self.segments.last_mut().ok_or(Error::SegmentNotFound)?;
             last_segment.append_messages(&messages).await?;
         }
+        */
 
+        /*
         if let Some(cache) = &mut self.cache {
             cache.extend(messages);
         }
+         */
 
         self.unsaved_messages_count += messages_count;
         {
@@ -418,7 +438,7 @@ mod tests {
         let mut partition = create_partition(false);
         let messages = create_messages();
         let messages_count = messages.len() as u32;
-        partition.append_messages(messages).await.unwrap();
+        partition.append_messages(&CompressionAlgorithm::None, &None, messages).await.unwrap();
 
         let loaded_messages = partition
             .get_messages_by_offset(0, messages_count)
@@ -433,7 +453,7 @@ mod tests {
         let messages = create_messages();
         let messages_count = messages.len() as u32;
         let unique_messages_count = 3;
-        partition.append_messages(messages).await.unwrap();
+        partition.append_messages(&CompressionAlgorithm::None, &None ,messages).await.unwrap();
 
         let loaded_messages = partition
             .get_messages_by_offset(0, messages_count)

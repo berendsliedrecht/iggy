@@ -11,6 +11,7 @@ use serde_with::base64::Base64;
 use serde_with::serde_as;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
+use std::io::Read;
 use std::str::FromStr;
 use std::sync::Arc;
 
@@ -204,5 +205,11 @@ impl Message {
         }
         bytes.put_u32_le(self.length);
         bytes.extend(&self.payload);
+    }
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let size = self.get_size_bytes() as usize;
+        let mut buffer = Vec::with_capacity(size);
+        self.extend(&mut buffer);
+        buffer
     }
 }

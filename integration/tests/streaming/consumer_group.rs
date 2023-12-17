@@ -1,3 +1,4 @@
+use iggy::compression::compression_algorithm::CompressionAlgorithm;
 use crate::streaming::common::test_setup::TestSetup;
 use iggy::identifier::Identifier;
 use server::streaming::topics::topic::Topic;
@@ -79,6 +80,7 @@ async fn init_topic(setup: &TestSetup) -> Topic {
         name,
         1,
         setup.config.clone(),
+        CompressionAlgorithm::None,
         setup.storage.clone(),
         None,
     )

@@ -1,6 +1,7 @@
 use crate::streaming::common::test_setup::TestSetup;
 use server::streaming::topics::topic::Topic;
 use tokio::fs;
+use iggy::compression::compression_algorithm::CompressionAlgorithm;
 
 #[tokio::test]
 async fn should_persist_topics_with_partitions_directories_and_info_file() {
@@ -17,6 +18,7 @@ async fn should_persist_topics_with_partitions_directories_and_info_file() {
             &name,
             partitions_count,
             setup.config.clone(),
+            CompressionAlgorithm::None,
             setup.storage.clone(),
             None,
         )
@@ -48,6 +50,7 @@ async fn should_load_existing_topic_from_disk() {
             &name,
             partitions_count,
             setup.config.clone(),
+            CompressionAlgorithm::None,
             setup.storage.clone(),
             None,
         )
@@ -91,6 +94,7 @@ async fn should_delete_existing_topic_from_disk() {
             &name,
             partitions_count,
             setup.config.clone(),
+            CompressionAlgorithm::None,
             setup.storage.clone(),
             None,
         )

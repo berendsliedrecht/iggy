@@ -2,9 +2,9 @@ use crate::configs::system::SystemConfig;
 use crate::streaming::segments::index::Index;
 use crate::streaming::segments::time_index::TimeIndex;
 use crate::streaming::storage::SystemStorage;
-use iggy::models::messages::Message;
 use iggy::utils::timestamp::TimeStamp;
 use std::sync::Arc;
+use crate::streaming::models::messages_batch::MessagesBatch;
 
 pub const LOG_EXTENSION: &str = "log";
 pub const INDEX_EXTENSION: &str = "index";
@@ -25,7 +25,7 @@ pub struct Segment {
     pub current_size_bytes: u32,
     pub is_closed: bool,
     pub(crate) message_expiry: Option<u32>,
-    pub(crate) unsaved_messages: Option<Vec<Arc<Message>>>,
+    pub(crate) unsaved_messages: Option<Vec<MessagesBatch>>,
     pub(crate) config: Arc<SystemConfig>,
     pub(crate) indexes: Option<Vec<Index>>,
     pub(crate) time_indexes: Option<Vec<TimeIndex>>,

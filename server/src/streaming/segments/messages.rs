@@ -6,6 +6,7 @@ use iggy::error::Error;
 use iggy::models::messages::Message;
 use std::sync::Arc;
 use tracing::trace;
+use crate::streaming::models::messages_batch::MessagesBatch;
 
 const EMPTY_MESSAGES: Vec<Arc<Message>> = vec![];
 
@@ -177,26 +178,30 @@ impl Segment {
         Ok(messages)
     }
 
-    pub async fn append_messages(&mut self, messages: &[Arc<Message>]) -> Result<(), Error> {
+    pub async fn append_messages(&mut self, messages: MessagesBatch, last_message_offset: u64) -> Result<(), Error> {
         if self.is_closed {
             return Err(Error::SegmentClosed(self.start_offset, self.partition_id));
         }
 
-        let len = messages.len();
-
-        let unsaved_messages = self.unsaved_messages.get_or_insert_with(Vec::new);
-        unsaved_messages.reserve(len);
-
+        // Does this even make sense? Maybe preallocate Vec with 100 capacity
+        // and then check whether we are reaching the capacity limit and resize it?
         if let Some(indexes) = &mut self.indexes {
-            indexes.reserve(len);
+            indexes.reserve(1);
         }
 
         if let Some(time_indexes) = &mut self.time_indexes {
-            time_indexes.reserve(len);
+            time_indexes.reserve(1);
         }
+
+        // For now ignoring timestamp index, need to calculate max_timestamp first.
+        self.store_index_for_batch(last_message_offset);
+
+        let unsaved_messages = self.unsaved_messages.get_or_insert_with(Vec::new);
+        unsaved_messages.push(messages);
 
         // Not the prettiest code. It's done this way to avoid repeatably
         // checking if indexes and time_indexes are Some or None.
+        /*
         if self.indexes.is_some() && self.time_indexes.is_some() {
             for message in messages {
                 let relative_offset = (message.offset - self.start_offset) as u32;
@@ -248,8 +253,40 @@ impl Segment {
                 unsaved_messages.push(message.clone());
             }
         }
-
+        */
         Ok(())
+    }
+    fn store_index_for_batch(&mut self, batch_last_offset: u64) {
+        let relative_offset = (batch_last_offset - self.start_offset) as u32;
+        match (&mut self.indexes, &mut self.time_indexes) {
+            (Some(indexes), Some(time_indexes)) => {
+                indexes.push(Index {
+                    relative_offset,
+                    position: self.current_size_bytes,
+                });
+                /*
+                time_indexes.push(TimeIndex {
+                    relative_offset,
+                    timestamp: message.timestamp,
+                });
+                 */
+            }
+            (Some(indexes), None) => {
+                indexes.push(Index {
+                    relative_offset,
+                    position: self.current_size_bytes,
+                });
+            }
+            (None, Some(time_indexes)) => {
+                /*
+                time_indexes.push(TimeIndex {
+                    relative_offset,
+                    timestamp: message.timestamp,
+                });
+                 */
+            }
+            (None, None) => {}
+        };
     }
 
     pub async fn persist_messages(
