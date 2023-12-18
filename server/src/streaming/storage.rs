@@ -24,6 +24,7 @@ use iggy::models::user_info::UserId;
 use sled::Db;
 use std::fmt::{Debug, Formatter};
 use std::sync::Arc;
+use crate::streaming::models::messages_batch::MessagesBatch;
 
 #[async_trait]
 pub trait Storage<T>: Sync + Send {
@@ -104,7 +105,7 @@ pub trait SegmentStorage: Storage<Segment> {
     async fn save_messages(
         &self,
         segment: &Segment,
-        messages: &[Arc<Message>],
+        messages_batches: &[MessagesBatch],
     ) -> Result<u32, Error>;
     async fn load_message_ids(&self, segment: &Segment) -> Result<Vec<u128>, Error>;
     async fn load_checksums(&self, segment: &Segment) -> Result<(), Error>;
@@ -119,8 +120,6 @@ pub trait SegmentStorage: Storage<Segment> {
     async fn save_index(
         &self,
         segment: &Segment,
-        current_position: u32,
-        messages: &[Arc<Message>],
     ) -> Result<(), Error>;
     async fn load_all_time_indexes(&self, segment: &Segment) -> Result<Vec<TimeIndex>, Error>;
     async fn load_last_time_index(&self, segment: &Segment) -> Result<Option<TimeIndex>, Error>;
@@ -444,8 +443,8 @@ pub(crate) mod tests {
 
         async fn save_messages(
             &self,
-            _segment: &Segment,
-            _messages: &[Arc<Message>],
+            segment: &Segment,
+            messages_batches: &[MessagesBatch],
         ) -> Result<u32, Error> {
             Ok(0)
         }
@@ -475,8 +474,6 @@ pub(crate) mod tests {
         async fn save_index(
             &self,
             _segment: &Segment,
-            _current_position: u32,
-            _messages: &[Arc<Message>],
         ) -> Result<(), Error> {
             Ok(())
         }

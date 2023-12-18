@@ -1,5 +1,5 @@
 use crate::streaming::models::messages_batch::MessagesBatch;
-use bytes::Bytes;
+use bytes::{BufMut, Bytes};
 use iggy::models::messages::Message;
 
 impl MessagesBatch {
@@ -27,5 +27,11 @@ impl MessagesBatch {
 
     pub fn get_size_bytes(&self) -> u32 {
         return 8 + 4 + 4 + self.messages.len() as u32;
+    }
+    pub fn extend(&self, bytes: &mut Vec<u8>) {
+        bytes.put_u64_le(self.base_offset);
+        bytes.put_u32_le(self.length);
+        bytes.put_u32_le(self.last_offset_delta);
+        bytes.extend(&self.messages);
     }
 }

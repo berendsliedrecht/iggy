@@ -6,6 +6,7 @@ use crate::streaming::storage::SegmentStorage;
 use iggy::error::Error;
 use iggy::models::messages::Message;
 use std::sync::Arc;
+use bytes::BufMut;
 use tracing::trace;
 
 const EMPTY_MESSAGES: Vec<Arc<Message>> = vec![];
@@ -299,6 +300,11 @@ impl Segment {
             }
             (None, None) => {}
         };
+
+        // Regardless of whether caching of indexes and time_indexes is on
+        // store them in the unsaved buffer
+        self.unsaved_indexes.put_u32_le(relative_offset);
+        self.unsaved_indexes.put_u32_le(self.current_size_bytes);
     }
 
     pub async fn persist_messages(
@@ -323,11 +329,13 @@ impl Segment {
 
         let saved_bytes = storage.save_messages(self, unsaved_messages).await?;
         let current_position = self.current_size_bytes - saved_bytes;
-        storage
-            .save_index(self, current_position, unsaved_messages)
-            .await?;
-        storage.save_time_index(self, unsaved_messages).await?;
 
+        storage
+            .save_index(&self)
+            .await?;
+        self.unsaved_indexes.clear();
+
+        //storage.save_time_index(self, unsaved_messages).await?;
         trace!(
             "Saved {} messages on disk in segment with start offset: {} for partition with ID: {}, total bytes written: {}.",
             unsaved_messages.len(),

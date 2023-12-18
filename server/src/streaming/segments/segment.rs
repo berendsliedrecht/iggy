@@ -5,6 +5,7 @@ use crate::streaming::segments::time_index::TimeIndex;
 use crate::streaming::storage::SystemStorage;
 use iggy::utils::timestamp::TimeStamp;
 use std::sync::Arc;
+use bytes::{Bytes, BytesMut};
 
 pub const LOG_EXTENSION: &str = "log";
 pub const INDEX_EXTENSION: &str = "index";
@@ -28,6 +29,7 @@ pub struct Segment {
     pub(crate) unsaved_messages: Option<Vec<MessagesBatch>>,
     pub(crate) config: Arc<SystemConfig>,
     pub(crate) indexes: Option<Vec<Index>>,
+    pub(crate) unsaved_indexes: Vec<u8>,
     pub(crate) time_indexes: Option<Vec<TimeIndex>>,
     pub(crate) storage: Arc<SystemStorage>,
 }
@@ -60,6 +62,7 @@ impl Segment {
                 true => Some(Vec::new()),
                 false => None,
             },
+            unsaved_indexes: Vec::with_capacity(1024),
             time_indexes: match config.segment.cache_time_indexes {
                 true => Some(Vec::new()),
                 false => None,

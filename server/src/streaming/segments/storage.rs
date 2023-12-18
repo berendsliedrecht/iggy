@@ -18,6 +18,7 @@ use std::sync::Arc;
 use tokio::io::{AsyncReadExt, AsyncSeekExt, BufReader};
 use tracing::log::{trace, warn};
 use tracing::{error, info};
+use crate::streaming::models::messages_batch::MessagesBatch;
 
 const EMPTY_INDEXES: Vec<Index> = vec![];
 const EMPTY_TIME_INDEXES: Vec<TimeIndex> = vec![];
@@ -206,16 +207,16 @@ impl SegmentStorage for FileSegmentStorage {
     async fn save_messages(
         &self,
         segment: &Segment,
-        messages: &[Arc<Message>],
+        messages_batches: &[MessagesBatch],
     ) -> Result<u32, Error> {
-        let messages_size = messages
+        let messages_size = messages_batches
             .iter()
-            .map(|message| message.get_size_bytes())
+            .map(|batch| batch.get_size_bytes())
             .sum::<u32>();
 
         let mut bytes = Vec::with_capacity(messages_size as usize);
-        for message in messages {
-            message.extend(&mut bytes);
+        for batch in messages_batches {
+            batch.extend(&mut bytes);
         }
 
         if let Err(err) = self
@@ -396,19 +397,11 @@ impl SegmentStorage for FileSegmentStorage {
     async fn save_index(
         &self,
         segment: &Segment,
-        mut current_position: u32,
-        messages: &[Arc<Message>],
     ) -> Result<(), Error> {
-        let mut bytes = Vec::with_capacity(messages.len() * 4);
-        for message in messages {
-            trace!("Persisting index for position: {}", current_position);
-            bytes.put_u32_le(current_position);
-            current_position += message.get_size_bytes();
-        }
-
+        let unsaved_index  = segment.unsaved_indexes.as_ref();
         if let Err(err) = self
             .persister
-            .append(&segment.index_path, &bytes)
+            .append(&segment.index_path,  unsaved_index)
             .await
             .with_context(|| format!("Failed to save index to segment: {}", segment.index_path))
         {
