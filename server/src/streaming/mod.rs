@@ -1,3 +1,4 @@
+pub mod batching;
 pub mod cache;
 pub mod clients;
 mod deduplication;
@@ -15,4 +16,3 @@ pub mod systems;
 pub mod topics;
 pub mod users;
 pub mod utils;
-pub mod batching;

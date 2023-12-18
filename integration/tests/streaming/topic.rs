@@ -1,7 +1,7 @@
 use crate::streaming::common::test_setup::TestSetup;
+use iggy::compression::compression_algorithm::CompressionAlgorithm;
 use server::streaming::topics::topic::Topic;
 use tokio::fs;
-use iggy::compression::compression_algorithm::CompressionAlgorithm;
 
 #[tokio::test]
 async fn should_persist_topics_with_partitions_directories_and_info_file() {

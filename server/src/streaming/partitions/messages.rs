@@ -1,3 +1,4 @@
+use crate::streaming::models::messages_batch::MessagesBatch;
 use crate::streaming::partitions::partition::Partition;
 use crate::streaming::polling_consumer::PollingConsumer;
 use crate::streaming::segments::segment::Segment;
@@ -8,7 +9,6 @@ use iggy::models::messages::Message;
 use iggy::utils::crypto::Encryptor;
 use std::sync::Arc;
 use tracing::{trace, warn};
-use crate::streaming::models::messages_batch::MessagesBatch;
 
 const EMPTY_MESSAGES: Vec<Arc<Message>> = vec![];
 
@@ -374,7 +374,7 @@ impl Partition {
             curr_offset += 1;
         }
 
-        let last_offset  = curr_offset + self.current_offset;
+        let last_offset = curr_offset + self.current_offset;
         if self.should_increment_offset {
             self.current_offset += last_offset;
         } else {
@@ -438,7 +438,10 @@ mod tests {
         let mut partition = create_partition(false);
         let messages = create_messages();
         let messages_count = messages.len() as u32;
-        partition.append_messages(&CompressionAlgorithm::None, &None, messages).await.unwrap();
+        partition
+            .append_messages(&CompressionAlgorithm::None, &None, messages)
+            .await
+            .unwrap();
 
         let loaded_messages = partition
             .get_messages_by_offset(0, messages_count)
@@ -453,7 +456,10 @@ mod tests {
         let messages = create_messages();
         let messages_count = messages.len() as u32;
         let unique_messages_count = 3;
-        partition.append_messages(&CompressionAlgorithm::None, &None ,messages).await.unwrap();
+        partition
+            .append_messages(&CompressionAlgorithm::None, &None, messages)
+            .await
+            .unwrap();
 
         let loaded_messages = partition
             .get_messages_by_offset(0, messages_count)

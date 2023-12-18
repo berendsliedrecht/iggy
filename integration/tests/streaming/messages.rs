@@ -1,5 +1,6 @@
 use crate::streaming::common::test_setup::TestSetup;
 use bytes::Bytes;
+use iggy::compression::compression_algorithm::CompressionAlgorithm;
 use iggy::models::header::{HeaderKey, HeaderValue};
 use iggy::models::messages::{Message, MessageState};
 use iggy::utils::{checksum, timestamp::TimeStamp};
@@ -8,7 +9,6 @@ use server::streaming::partitions::partition::Partition;
 use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::Arc;
-use iggy::compression::compression_algorithm::CompressionAlgorithm;
 
 #[tokio::test]
 async fn should_persist_messages_and_then_load_them_from_disk() {
@@ -81,7 +81,10 @@ async fn should_persist_messages_and_then_load_them_from_disk() {
 
     setup.create_partitions_directory(stream_id, topic_id).await;
     partition.persist().await.unwrap();
-    partition.append_messages(&CompressionAlgorithm::None, &None, messages).await.unwrap();
+    partition
+        .append_messages(&CompressionAlgorithm::None, &None, messages)
+        .await
+        .unwrap();
     assert_eq!(partition.unsaved_messages_count, 0);
 
     /*

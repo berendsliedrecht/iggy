@@ -1,5 +1,6 @@
 use crate::streaming::common::test_setup::TestSetup;
 use byte_unit::Byte;
+use iggy::compression::compression_algorithm::CompressionAlgorithm;
 use iggy::messages::poll_messages::PollingStrategy;
 use iggy::messages::send_messages;
 use iggy::messages::send_messages::Partitioning;
@@ -11,7 +12,6 @@ use server::streaming::topics::topic::Topic;
 use server::streaming::utils::hash;
 use std::collections::HashMap;
 use std::str::{from_utf8, FromStr};
-use iggy::compression::compression_algorithm::CompressionAlgorithm;
 
 #[tokio::test]
 async fn given_disabled_cache_all_messages_should_be_polled() {
@@ -110,7 +110,12 @@ async fn given_key_none_messages_should_be_appended_to_the_next_partition_using_
     for i in 1..=partitions_count * messages_per_partition_count {
         let payload = get_payload(i);
         topic
-            .append_messages(&partitioning, &CompressionAlgorithm::None, &None, vec![get_message(&payload)])
+            .append_messages(
+                &partitioning,
+                &CompressionAlgorithm::None,
+                &None,
+                vec![get_message(&payload)],
+            )
             .await
             .unwrap();
     }
@@ -130,7 +135,12 @@ async fn given_key_partition_id_messages_should_be_appended_to_the_chosen_partit
     for i in 1..=partitions_count * messages_per_partition_count {
         let payload = get_payload(i);
         topic
-            .append_messages(&partitioning,&CompressionAlgorithm::None ,&None,vec![get_message(&payload)])
+            .append_messages(
+                &partitioning,
+                &CompressionAlgorithm::None,
+                &None,
+                vec![get_message(&payload)],
+            )
             .await
             .unwrap();
     }
@@ -154,7 +164,12 @@ async fn given_key_messages_key_messages_should_be_appended_to_the_calculated_pa
         let payload = get_payload(entity_id);
         let partitioning = Partitioning::messages_key_u32(entity_id);
         topic
-            .append_messages(&partitioning, &CompressionAlgorithm::None, &None, vec![get_message(&payload)])
+            .append_messages(
+                &partitioning,
+                &CompressionAlgorithm::None,
+                &None,
+                vec![get_message(&payload)],
+            )
             .await
             .unwrap();
     }

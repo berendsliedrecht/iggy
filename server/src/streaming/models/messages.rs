@@ -1,7 +1,7 @@
+use bytes::Bytes;
 use iggy::models::messages::Message;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
-use bytes::Bytes;
 
 // It's the same as PolledMessages from Iggy models, but with the Arc<Message> instead of Message.
 #[derive(Debug, Serialize, Deserialize)]
@@ -10,5 +10,3 @@ pub struct PolledMessages {
     pub current_offset: u64,
     pub messages: Vec<Arc<Message>>,
 }
-
-

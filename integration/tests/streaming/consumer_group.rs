@@ -1,5 +1,5 @@
-use iggy::compression::compression_algorithm::CompressionAlgorithm;
 use crate::streaming::common::test_setup::TestSetup;
+use iggy::compression::compression_algorithm::CompressionAlgorithm;
 use iggy::identifier::Identifier;
 use server::streaming::topics::topic::Topic;
 
