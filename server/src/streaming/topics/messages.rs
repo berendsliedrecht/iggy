@@ -291,7 +291,7 @@ mod tests {
                 None,
             )];
             topic
-                .append_messages(&partitioning, messages)
+                .append_messages(&partitioning, &CompressionAlgorithm::None, &None, messages)
                 .await
                 .unwrap();
         }
@@ -327,7 +327,7 @@ mod tests {
                 None,
             )];
             topic
-                .append_messages(&partitioning, messages)
+                .append_messages(&partitioning, &CompressionAlgorithm::None, &None, messages)
                 .await
                 .unwrap();
         }
@@ -390,6 +390,16 @@ mod tests {
         let name = "test";
         let config = Arc::new(SystemConfig::default());
 
-        Topic::create(stream_id, id, name, partitions_count, config, storage, None).unwrap()
+        Topic::create(
+            stream_id,
+            id,
+            name,
+            partitions_count,
+            config,
+            CompressionAlgorithm::None,
+            storage,
+            None,
+        )
+        .unwrap()
     }
 }

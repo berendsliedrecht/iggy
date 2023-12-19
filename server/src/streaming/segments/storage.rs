@@ -1,3 +1,4 @@
+use crate::streaming::models::messages_batch::MessagesBatch;
 use crate::streaming::persistence::persister::Persister;
 use crate::streaming::segments::index::{Index, IndexRange};
 use crate::streaming::segments::segment::Segment;
@@ -18,7 +19,6 @@ use std::sync::Arc;
 use tokio::io::{AsyncReadExt, AsyncSeekExt, BufReader};
 use tracing::log::{trace, warn};
 use tracing::{error, info};
-use crate::streaming::models::messages_batch::MessagesBatch;
 
 const EMPTY_INDEXES: Vec<Index> = vec![];
 const EMPTY_TIME_INDEXES: Vec<TimeIndex> = vec![];
@@ -394,14 +394,11 @@ impl SegmentStorage for FileSegmentStorage {
         }))
     }
 
-    async fn save_index(
-        &self,
-        segment: &Segment,
-    ) -> Result<(), Error> {
-        let unsaved_index  = segment.unsaved_indexes.as_ref();
+    async fn save_index(&self, segment: &Segment) -> Result<(), Error> {
+        let unsaved_index = segment.unsaved_indexes.as_ref();
         if let Err(err) = self
             .persister
-            .append(&segment.index_path,  unsaved_index)
+            .append(&segment.index_path, unsaved_index)
             .await
             .with_context(|| format!("Failed to save index to segment: {}", segment.index_path))
         {

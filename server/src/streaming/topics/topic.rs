@@ -136,6 +136,7 @@ mod tests {
             name,
             partitions_count,
             config,
+            CompressionAlgorithm::None,
             storage,
             Some(message_expiry),
         )

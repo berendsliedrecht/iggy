@@ -3,9 +3,9 @@ use crate::streaming::models::messages_batch::MessagesBatch;
 use crate::streaming::segments::index::Index;
 use crate::streaming::segments::time_index::TimeIndex;
 use crate::streaming::storage::SystemStorage;
+use bytes::{Bytes, BytesMut};
 use iggy::utils::timestamp::TimeStamp;
 use std::sync::Arc;
-use bytes::{Bytes, BytesMut};
 
 pub const LOG_EXTENSION: &str = "log";
 pub const INDEX_EXTENSION: &str = "index";

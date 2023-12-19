@@ -3,10 +3,10 @@ use crate::streaming::segments::index::{Index, IndexRange};
 use crate::streaming::segments::segment::Segment;
 use crate::streaming::segments::time_index::TimeIndex;
 use crate::streaming::storage::SegmentStorage;
+use bytes::BufMut;
 use iggy::error::Error;
 use iggy::models::messages::Message;
 use std::sync::Arc;
-use bytes::BufMut;
 use tracing::trace;
 
 const EMPTY_MESSAGES: Vec<Arc<Message>> = vec![];
@@ -65,25 +65,28 @@ impl Segment {
             messages.append(&mut buffered_messages);
 
             Ok(messages)
-        }
+        */
+    }
 
-        pub async fn get_all_messages(&self) -> Result<Vec<Arc<Message>>, Error> {
-            self.get_messages(self.start_offset, self.get_messages_count() as u32)
-                .await
-        }
+    pub async fn get_all_messages(&self) -> Result<Vec<Arc<Message>>, Error> {
+        self.get_messages(self.start_offset, self.get_messages_count() as u32)
+            .await
+    }
 
-        pub async fn get_newest_messages_by_size(
-            &self,
-            size_bytes: u64,
-        ) -> Result<Vec<Arc<Message>>, Error> {
-            let messages = self
-                .storage
-                .segment
-                .load_newest_messages_by_size(self, size_bytes)
-                .await?;
+    pub async fn get_newest_messages_by_size(
+        &self,
+        size_bytes: u64,
+    ) -> Result<Vec<Arc<Message>>, Error> {
+        /*
+        let messages = self
+            .storage
+            .segment
+            .load_newest_messages_by_size(self, size_bytes)
+            .await?;
 
-            Ok(messages)
-            */
+        Ok(messages)
+        */
+        Ok(EMPTY_MESSAGES)
     }
 
     fn load_messages_from_unsaved_buffer(&self, offset: u64, end_offset: u64) -> Vec<Arc<Message>> {
@@ -328,11 +331,9 @@ impl Segment {
         );
 
         let saved_bytes = storage.save_messages(self, unsaved_messages).await?;
-        let current_position = self.current_size_bytes - saved_bytes;
+        //let current_position = self.current_size_bytes - saved_bytes;
 
-        storage
-            .save_index(&self)
-            .await?;
+        storage.save_index(&self).await?;
         self.unsaved_indexes.clear();
 
         //storage.save_time_index(self, unsaved_messages).await?;

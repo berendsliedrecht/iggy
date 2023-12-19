@@ -1,3 +1,4 @@
+use crate::streaming::models::messages_batch::MessagesBatch;
 use crate::streaming::partitions::partition::{ConsumerOffset, Partition};
 use crate::streaming::partitions::storage::FilePartitionStorage;
 use crate::streaming::persistence::persister::Persister;
@@ -24,7 +25,6 @@ use iggy::models::user_info::UserId;
 use sled::Db;
 use std::fmt::{Debug, Formatter};
 use std::sync::Arc;
-use crate::streaming::models::messages_batch::MessagesBatch;
 
 #[async_trait]
 pub trait Storage<T>: Sync + Send {
@@ -117,10 +117,7 @@ pub trait SegmentStorage: Storage<Segment> {
         index_start_offset: u64,
         index_end_offset: u64,
     ) -> Result<Option<IndexRange>, Error>;
-    async fn save_index(
-        &self,
-        segment: &Segment,
-    ) -> Result<(), Error>;
+    async fn save_index(&self, segment: &Segment) -> Result<(), Error>;
     async fn load_all_time_indexes(&self, segment: &Segment) -> Result<Vec<TimeIndex>, Error>;
     async fn load_last_time_index(&self, segment: &Segment) -> Result<Option<TimeIndex>, Error>;
     async fn save_time_index(
@@ -471,10 +468,7 @@ pub(crate) mod tests {
             Ok(None)
         }
 
-        async fn save_index(
-            &self,
-            _segment: &Segment,
-        ) -> Result<(), Error> {
+        async fn save_index(&self, _segment: &Segment) -> Result<(), Error> {
             Ok(())
         }
 
