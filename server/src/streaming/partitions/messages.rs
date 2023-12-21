@@ -364,26 +364,27 @@ impl Partition {
         }
 
         let messages_count = messages.len() as u32;
-        let begin_offset = self.current_offset;
+        let begin_offset = if self.current_offset == 0 { 0 } else { self.current_offset + 1 };
 
         // lets keep it like that for now, in the future when producer side compression
         // is implemented will change this to offset_delta (u32 instead of u64)
-        let mut curr_offset = self.current_offset;
+        let mut curr_offset = begin_offset;
         for message in &mut messages {
             message.offset = curr_offset;
             curr_offset += 1;
         }
 
-        let last_offset = curr_offset + self.current_offset;
+        let last_offset = curr_offset - 1;
         if self.should_increment_offset {
             self.current_offset += last_offset;
         } else {
             self.should_increment_offset = true;
             self.current_offset += last_offset;
         }
+        let last_offset_delta = (last_offset - begin_offset) as u32;
 
         //batching compress
-        let batch = MessagesBatch::messages_to_batch(begin_offset, curr_offset as u32, messages);
+        let batch = MessagesBatch::messages_to_batch(begin_offset, last_offset_delta as u32, messages);
         {
             let last_segment = self.segments.last_mut().ok_or(Error::SegmentNotFound)?;
             last_segment.append_messages(batch, last_offset).await?;
